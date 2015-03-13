@@ -37,7 +37,7 @@
   	<tr>
   		<td>Product:</td>
   		<td>
-  		  <%= f.select :product_code, options_for_select(Product.all.collect{|x| x.code}.uniq), :prompt => true %>
+  		  <%= f.select :product_code, options_for_select(Product.all.collect{|x| x.code}.uniq.insert(0, "all"), :selected => f.object.product_code), :prompt => true %>
   		</td>
   	</tr>
 
@@ -45,16 +45,18 @@
   		<td>Discount Amount:</td>
   		<td><%= f.text_field :amount %></td>
   	</tr>
+	
+  	<tr>
+  		<td>Discount Percentage:</td>
+  		<td><%= f.text_field :percentage %><br>
+			<span class="sosumi">if a percentage is set, this will take precedence over "Discount Amount"</span></td>
+  	</tr>
 
   	<tr>
   		<td>Use Limit:</td>
   		<td><%= f.text_field :use_limit %></td>
   	</tr>
   	
-  	<tr>
-  	  <td>Expiration Date:</td>
-  	  <td><%= f.datetime_select :expiration_date, :start_year => Time.now.year, :prompt => true, :ampm => true %></td>
-  	</tr>
   </table>
   
   <div class="actions">

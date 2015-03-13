@@ -3,10 +3,11 @@ Welcome to Potion Store
 
 Features:
 
+- PayPal Website Payments Standard support by default
 - PayPal Website Payments Pro support
 - PayPal Express Checkout support
 - Google Checkout support
-- Administration interface with some simple sales charts
+- Administration interface with some simple sales charts (http://www.highcharts.com)
 - Coupons
 - Send lost license page (http://mycompany.com/store/lost_license)
 - Google Analytics e-commerce transaction tracking support for PayPal and credit card orders
@@ -15,7 +16,7 @@ Features:
 Dependencies
 ------------
 
-- Rails 3.0 or higher.
+- Rails 4.1 or higher.
 - PostgreSQL or MySQL
 
 
@@ -27,17 +28,16 @@ and running on your local machine.
 
 - Install gems via Bundler
   - Run ```bundle install```
+  - Run ```bundle exec spring binstub --all```
 
 - Edit the following config files to suit your needs
 
   - config/store.yml
-  - config/paypal.yml
-  - config/google_checkout.yml
+  - config/paypal_wps.yml
 
 - Create config/google_checkout.yml. Modify it with your credentials.
   ```
   # Settings for Google Checkout
-
   # Get these by logging into Google Checkout's merchant site and the sandbox equivalent
 
   development:
@@ -93,7 +93,8 @@ and running on your local machine.
   ca_file: "certs/api_cert_chain.crt"
   ```
 - Set session store secret
-  Edit config/environment.rb and modify the config.action_controller.session setting
+  Edit config/secrets.yml
+  run "rake secret" to generate secret_key_base's
 
 - Setup database
   - Install Postgresql or MySQL if you haven't
@@ -101,11 +102,15 @@ and running on your local machine.
   	Make sure to set the encoding of the database to UTF8.
 	I recommend pgAdmin for Postgresql newcomers.
   - Edit config/database.yml
-  - run "rake db:migrate" to create the database schema
+  - run "rake db:create db:migrate" to create the database schema
+  
+- Precompile Assets
+  - run "rake assets:clean" to clean any previously cached assets
+  - run "rake assets:precompile"
    
 - Run ```rails s``` and test through
   <http://localhost:3000/store> and
-  <http://localhost:3000/admin>
+  <http://localhost:3000/store/admin>
 
 - Replace the default license key generator in lib/licensekey.rb with your own
 

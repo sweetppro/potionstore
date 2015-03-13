@@ -6,21 +6,25 @@
     <%= stylesheet_link_tag "scaffold" %>
     <%= stylesheet_link_tag "admin" %>
     <%= javascript_include_tag 'application' %>
+	<%= javascript_include_tag 'standalone-framework' %>
+	<%= javascript_include_tag 'highcharts' %>
     <meta name="viewport" content="width=device-width"/>
 </head>
 <body>
     <% if session[:logged_in] %>
     <ul id="topmenu">
-        <li><%= link_to("Reports", {:controller => "/admin", :action => "index"}, {:accesskey => "1"}) %></li>
+        <li><%= link_to("Reports", {:controller => "admin/", :action => "index"}, {:accesskey => "1"}) %></li>
         <li><%= link_to("Orders", {:controller => "admin/orders", :action => "index"}, {:accesskey => "2"}) %></li>
-        <li><%= link_to("Add Order", {:controller => "admin/orders", :action => "new"}, {:accesskey => "3"}) %></li>
+        <li><%= link_to("Add&nbsp;Order".html_safe, {:controller => "admin/orders", :action => "new"}, {:accesskey => "3"}) %></li>
         <li><%= link_to("Coupons", admin_coupons_path) %></li>
         <li><%= link_to("Products", {:controller => "admin/products", :action => "index"}, {:accesskey => "5"}) %></li>
         <li id="search">
-            <%= form_tag({:controller => "admin/orders", :action => "index"}, {:method => "GET"}) do %>
-            <%= text_field_tag("query", nil, {:accesskey => "S"}) %>
-            <%= submit_tag "Search" %>
-            <% end %>
+			<div id="admin_search_form">
+            	<%= form_tag({:controller => "admin/orders", :action => "index"}, {:method => "GET"}) do %>
+            	<%= text_field_tag("query", nil, {:accesskey => "S"}) %>
+            	<%= submit_tag "Search" %>
+            	<% end %>
+			</div>
         </li>
     </ul>
     <% end %>

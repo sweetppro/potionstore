@@ -1,0 +1,32 @@
+<% content_for :head do %>
+<script type="text/javascript">
+var HELP_VALUES = new Array();
+HELP_VALUES['#licensee_name'] = 'Optional';
+</script>
+<% end %>
+
+<%= render :partial => "offsite_checkout_summary", :locals => { :address_name => "PayPal email", :order => @order } %>
+
+<div class="d"></div>
+
+<%= form_tag($STORE_PREFS['paypal_wps_url'], :onsubmit => "javascript:#{'setUrchinInputCode();' if not $STORE_PREFS['google_analytics_account'].blank?} return validate();") do %>
+
+<% {  "cmd"              => "_xclick",
+      "business"         => $STORE_PREFS['paypal_wps_email_address'],
+      "item_name"        => $STORE_PREFS['paypal_wps_purchase_item_name'],
+      "item_number"      => @order.tinyencode,
+      "amount"           => @order.total,
+      "no_shipping"      => 1,
+      "no_note"          => 1,
+      "return"           => url_for(:controller => 'order', :action => 'wps_thankyou', :only_path => false),
+      "notify_url"       => url_for(:controller => 'notification', :action => 'paypal_wps', :only_path => false),
+	 "charset"					 => "utf-8"
+      }.each_pair do |key,value| %>
+		 <%= hidden_field_tag(key, value) if value %>
+		 <% end %>
+
+<p style="text-align: right;">
+<%= submit_tag(" &nbsp; Continue to PayPal &rarr; ".html_safe) %>
+</p>
+
+<% end %>

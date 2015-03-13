@@ -6,16 +6,15 @@ class Admin::OrdersController < ApplicationController
   # GET /orders.xml
   def index
     q = params[:query]
-    conditions = "status <> 'P'"
+    conditions = "(status='C' OR status='X' OR status='F' OR status='S' OR status='P' OR status='V')"
     if q
       q = q.strip().downcase()
       if q.to_i != 0
         conditions = [conditions + "AND id=?", q.to_i]
       else
-        conditions = [conditions + " AND (LOWER(email) LIKE ? OR
-                                          LOWER(first_name) LIKE ? OR
-                                          LOWER(last_name) LIKE ? OR
-                                          LOWER(licensee_name) LIKE ?)", "#{q}%", "#{q}%", "#{q}%", "%#{q}%"]
+        conditions = [conditions + " AND (LOWER(payment_type) LIKE ? OR
+                                          LOWER(email) LIKE ? OR
+                                          LOWER(licensee_name) LIKE ?)", "#{q}%", "#{q}%", "%#{q}%"]
       end
     end
     @orders = Order.paginate :page => (params[:page] || 1), :per_page => 100, :conditions => conditions, :order => 'order_time DESC'
@@ -133,6 +132,15 @@ class Admin::OrdersController < ApplicationController
     @order = Order.find(params[:id])
     OrderMailer.thankyou(@order).deliver
     redirect_to :action => 'show', :id => @order.id
+  end
+  
+  def send_emails_from_admin
+    begin
+      send_emails()
+      flash[:notice] = 'Email was succesfully sent'
+    rescue
+      flash[:notice] = 'Email was not sent, try again'
+    end
   end
 
   protected

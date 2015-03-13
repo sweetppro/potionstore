@@ -4,6 +4,8 @@
   <tr>
     <th>Code</th>
     <th>Count</th>
+    <th>Discount</th>
+    <th>Percentage</th>
     <th>Product</th>
     <th></th>
   </tr>
@@ -12,6 +14,16 @@
   <tr>
     <td><%= coupon.attributes['code'] %></td>
     <td><%= coupon.attributes['count'] %></td>
+    <% if coupon.attributes['amount'] != 0 && coupon.attributes['amount'] != nil %>
+    		<td>$<%= coupon.attributes['amount'] %></td>
+    <% else %>
+		<td> --- </td>
+    <% end %>
+    <% if coupon.attributes['percentage'] != 0 && coupon.attributes['percentage'] != nil %>
+    		<td><%= coupon.attributes['percentage'] %>%</td>
+    <% else %>
+		<td> --- </td>
+    <% end %>
     <td><%= coupon.attributes['product_code'] %></td>
     <td><%= link_to 'Show', admin_coupon_path(coupon.attributes['code']) %></td>
   </tr>

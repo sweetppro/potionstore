@@ -130,9 +130,9 @@ body { margin: 0 50pt; }
 			</tr>
 			<% end %>
 			<tr id="total" class="r">
-				<td colspan="3" style="padding:5px 0;border-bottom: 1px solid #ddd"></td>
-				<td class="qty" style="padding:5px 0;border-bottom: 1px solid #ddd;text-align:center">
-					<strong>Total:</strong>
+				<td colspan="2" style="padding:5px 0;border-bottom: 1px solid #ddd"></td>
+				<td colspan="2" class="qty" style="padding:5px 0;border-bottom: 1px solid #ddd;text-align:center">
+					<strong>Total (USD):</strong>
 				</td>
 				<td class="price" style="padding:5px 0;border-bottom: 1px solid #ddd;text-align:right">
 					<strong><%= number_to_currency @order.total %></strong>

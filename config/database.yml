@@ -4,7 +4,9 @@ production:
   database: store
   username: root
   password: 
-  timeout: 5000
+  host: localhost
+  reconnect: true
+  port: 3306
 
 development:
   adapter: mysql2
@@ -12,7 +14,9 @@ development:
   database: store
   username: root
   password: 
-  timeout: 5000
+  host: localhost
+  reconnect: true
+  port: 3306
 
 test:
   adapter: mysql2
@@ -20,4 +24,6 @@ test:
   database: store-test
   username: root
   password: 
-  timeout: 5000
+  host: localhost
+  reconnect: true
+  port: 3306

@@ -1,22 +1,31 @@
 source 'http://rubygems.org'
 
-gem 'rails', '3.2.2'
+gem 'rails', '4.1.9'
 gem 'foreigner'
 gem "google4r-checkout", :git => 'https://github.com/nbudin/google4r-checkout.git'
-gem "money", "~> 4.0.1"
-gem 'mysql2', '~> 0.3.0'
-gem 'uuidtools'
+gem "money"
+gem 'mysql2', '~> 0.3.16'
+#gem 'mysql', '~> 2.9.1'
 gem "xml-simple", "~> 1.1.1"
 gem 'will_paginate'
 gem 'dynamic_form'
-gem "exception_notification", "~> 2.5.2", :require => 'exception_notifier'
-gem 'jquery-rails', '>= 1.0.12'
+gem 'exception_notification', '4.0.1'
+gem 'exception_notification-rake'
+gem 'jquery-rails'
+gem 'base32'
+gem 'execjs'
+gem 'therubyracer', :platforms => :ruby
+gem 'eventmachine'
+gem 'em-http-request'
+gem 'quiet_assets', :group => :development
+gem 'spring', group: :development
 
-#gem 'heroku'
-#gem 'pg'
+gem 'sass-rails'
+gem 'coffee-rails'
+gem 'uglifier'
 
-group :assets do
-  gem 'sass-rails'
-  gem 'coffee-rails'
-  gem 'uglifier'
-end
+gem 'protected_attributes'
+gem 'rails-observers'
+gem 'actionpack-page_caching'
+gem 'actionpack-action_caching'
+gem 'activerecord-deprecated_finders'

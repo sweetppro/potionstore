@@ -43,12 +43,10 @@ class Store::OrderController < ApplicationController
       coupon = Coupon.find_by_coupon(coupon_text)
       if coupon != nil && coupon.expired? 
         flash[:notice] = 'Coupon Expired'
-      elsif coupon != nil && !coupon.enabled?
-        flash[:notice] = 'Invalid Coupon'
       else
         flash[:notice] = 'Invalid Coupon'
       end
-      session[:coupon_text] = params[:coupon].strip
+      session[:coupon_text] = nil
       redirect_to :action => 'index' and return
     end
 
@@ -74,15 +72,21 @@ class Store::OrderController < ApplicationController
         flash[:notice] = 'Could not connect to PayPal'
         redirect_to :action => 'index'
       end
+      
+    # Handle PayPal WPS orders (refer config/paypal_wps.yml)
+    elsif params[:payment_type] == 'paypal_wps'
+        render :action => 'payment_paypal_wps'
+              
     elsif params[:payment_type] == 'gcheckout'
       # Handle Google Checkout orders
       render :action => 'payment_gcheckout'
     else
+      redirect_to :action => 'index' and return
       # credit card order
       # put in a dummy credit card number for testing
-      @order.cc_number = '4916306176169494' if not is_live?()
+      #@order.cc_number = '4916306176169494' if not is_live?()
 
-      render :action => 'payment_cc'
+      #render :action => 'payment_cc'
     end
   end
 
@@ -255,6 +259,98 @@ class Store::OrderController < ApplicationController
     # check_completed_order is a before_filter for this method
     @order = Order.find(session[:order_id])
   end
+  
+  def wps_thankyou
+
+      if params[:tx]
+        # Got PDT from PayPal (refer config/paypal_wps.yml)
+        # POST back to PayPal to get the details
+        begin
+          session[:order_details] = nil
+          require 'net/http'
+          require 'net/https'
+          url = URI.parse($STORE_PREFS['paypal_wps_url'])
+          req = Net::HTTP::Post.new(url.path)
+          req.set_form_data({:cmd => '_notify-synch', :tx  => params[:tx], :at  => $STORE_PREFS['paypal_wps_pdt_token']});
+          http = Net::HTTP.new(url.host, url.port)
+          http.use_ssl = true
+          body = http.start { |h| (res=h.request(req)).kind_of? Net::HTTPSuccess and res.read_body or nil }
+          if body && body.lines.first.strip == 'SUCCESS'
+            # PDT details available: Save them into the session, then redirect immediately with the 
+            # utm_nooverride parameter set in the URL - this is a hack that prevents Google Analytics from
+            # always crediting PayPal with the referral instead of the true referral.
+            # See http://www.roirevolution.com/blog/2007/02/tracking_paypal_transactions_in_google_analytics_1.html
+            require 'uri'
+            order_details = {}; body.each_line { |line| var,val=line.strip.split '='; order_details[var] = URI.decode val if val }
+            session[:order_details] = order_details
+          
+          
+         #when setting up button in PayPal, make sure "Donation ID" is left Blank!!!   
+            info = session[:order_details]
+            redirect_to "#{request.url[0..request.url.index('?')-1]}?utm_nooverride=1" and return
+          end
+        rescue Exception => e
+          logger.warn("Connection problem while trying to post PDT token to PayPal for customer #{params[:payer_email]}: #{e.inspect}")
+        end
+      end
+    
+      if !session[:order_details]
+        redirect_to :action => 'index' and return
+      end
+    
+      info = session[:order_details]
+    
+      info.each_pair { |var,val| logger.info("#{var} = #{val}") } if !is_live?
+    
+      begin
+        @order = Order.find_by_transaction_number_and_payment_type(info['txn_id'], 'PayPal')
+      rescue
+      end
+    
+      if !@order
+        # Create a temporary order from the PDT details
+        # Note that the real order will be created and saved within the notification handler, Store::NotificationController#paypal_wps
+        @order = Order.new
+        @order.status = 'S'
+        @order.first_name = info['first_name']
+        @order.last_name = info['last_name']
+
+        if info['custom'] && @order.valid_licensee_name(info['custom'])
+          @order.licensee_name = info['custom']
+        else
+          @order.licensee_name = @order.first_name + " " + @order.last_name
+        end
+
+        @order.email = info['payer_email']
+
+        @order.address1 = info['address_street'] 
+        @order.address2 = '' 
+        @order.city     = info['address_city'] 
+        @order.country  = info['address_country_code'] 
+        @order.zipcode  = info['address_zip'] 
+        @order.state    = info['address_state'] 
+
+        if !@order.country
+          # No address given to us by PayPal; try the other field
+          @order.country = info['residence_country'] or 'XX'
+        end
+
+        @order.payment_type = "PayPal"
+        @order.currency = info['mc_currency']
+    
+        if info['item_number'] != nil
+        	@order.tinydecode info['item_number']
+        end
+      end
+    
+      @payment = info['mc_gross']
+    
+      @products = @order.line_items.map {|i| i.product}
+      if !@products
+        @products = Product.find(:all, :conditions => {:active => 1})
+      end
+    
+    end
 
   def receipt
     # no need to check for nil order in the session here.

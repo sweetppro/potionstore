@@ -8,13 +8,12 @@
 <h3>Commands</h3>
 <ul>
 	<li><%= link_to "Edit Order", :action => "edit", :id => @order.id %></li>
-    <% if @order.complete? %>
+    <% if @order.complete? or @order.status == "S" or @order.status == "P" or @order.status == "F" or @order.status == "V" %>
     <li><%= link_to "Cancel Order", :action => "cancel", :id => @order.id %></li>
-    <% elsif @order.status == "X" %>
-	<li><%= link_to "Refund Order", :action => "refund", :id => @order.id %></li>
+	<% elsif @order.status == "X" %>
     <li><%= link_to "Uncancel Order", :action => "uncancel", :id => @order.id %></li>
     <% end %>
     <% if @order.complete? %>
-    <li><%= link_to "Email Purchase Receipt", :action => "send_emails", :id => @order.id %></li>
+    <li><%= link_to "Email Purchase Receipt", :action => "send_emails_from_admin", :id => @order.id %></li>
     <% end %>
 </ul>

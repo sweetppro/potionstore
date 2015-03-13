@@ -3,7 +3,7 @@ class Admin::CouponsController < ApplicationController
   before_filter :check_authentication
 
   def index
-    @coupons = Coupon.find_by_sql("select count(*) as count, i.code, i.product_code from coupons i group by i.code,i.product_code order by i.product_code,i.code")
+    @coupons = Coupon.find_by_sql("select count(*) as count, i.code, i.amount, i.percentage, i.product_code from coupons i group by i.code,i.product_code order by i.product_code,i.code")
   end
 
   def show
@@ -17,7 +17,8 @@ class Admin::CouponsController < ApplicationController
   def edit
     @coupon = Coupon.find(params[:id])
   end
-  
+
+=begin
   def toggle_state
     @coupon = Coupon.find(params[:id])
     
@@ -47,6 +48,7 @@ class Admin::CouponsController < ApplicationController
     
     redirect_to admin_coupon_path(@coupons.first.code)
   end
+=end
 
 =begin
   def delete_all_coupons_with_code
@@ -63,25 +65,13 @@ class Admin::CouponsController < ApplicationController
     if params[:coupon]
       form = params[:coupon]
 
-      if ! form["expiration_date(1i)"].blank?
-        expiration_date = Time.new(form["expiration_date(1i)"].to_i,
-                            form["expiration_date(2i)"].to_i,
-                            form["expiration_date(3i)"].to_i,
-                            form["expiration_date(4i)"].to_i,
-                            form["expiration_date(5i)"].to_i)
-      else
-        expiration_date = nil
-      end
-
       if Integer(form[:quantity]) == 1 && !form[:coupon].blank?
         generate_coupon(form[:code], form[:product_code], form[:description],
-                        form[:amount], form[:use_limit], form[:coupon].gsub(/[^0-9a-z ]/i, '').upcase,
-                        expiration_date)
+                        form[:amount], form[:percentage], form[:use_limit], form[:coupon].gsub(/[^0-9a-z ]/i, '').upcase)
       else
         1.upto(Integer(form[:quantity])) { |i|
           generate_coupon(form[:code], form[:product_code], form[:description],
-                          form[:amount], form[:use_limit], Coupon.random_string_of_length(16).upcase,
-                          expiration_date)
+                          form[:amount], form[:percentage], form[:use_limit], Coupon.random_string_of_length(16).upcase)
         }
       end
 
@@ -109,16 +99,16 @@ class Admin::CouponsController < ApplicationController
   end
   
   private
-    def generate_coupon(code, product_code, description, amount, use_limit, coupon_code, expiration_date)
+    def generate_coupon(code, product_code, description, amount, percentage, use_limit, coupon_code)
       coupon = Coupon.new
       coupon.code = code
       coupon.product_code = product_code
       coupon.description = description
       coupon.amount = amount
+      coupon.percentage = percentage
       coupon.use_limit = use_limit
       coupon.coupon = coupon_code
       coupon.creation_time = Time.now
-      coupon.expiration_date = expiration_date
       coupon.save 
     end
 end

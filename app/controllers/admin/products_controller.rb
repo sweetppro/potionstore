@@ -6,7 +6,7 @@ class Admin::ProductsController < ApplicationController
   # GET /products
   # GET /products.xml
   def index
-    @products = Product.find(:all)
+    @products = Product.find_each
 
     respond_to do |format|
       format.html # index.rhtml

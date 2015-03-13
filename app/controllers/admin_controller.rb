@@ -35,159 +35,95 @@ class AdminController < ApplicationController
     end
 
     revenue_summary()
-
-    flashRoute = url_for :controller => 'admin/charts', :action => 'revenue_history_days'
-    @chart = OpenFlashChart.swf_object(500, 170, flashRoute)
+    revenue_initial()
   end
+  
+  def revenue_initial
+    limit = 30
+    query_results = Order.connection.select_all(revenue_history_days_sql(limit))
 
-  # The revenue_xxx functions get called through ajax when user chooses different types of reports
-  def revenue_summary_amount
-    revenue_summary()
-    @type = "amount"
-    render :partial =>  "revenue_summary"
-  end
+    labels = []
+    data = []
 
-  def revenue_summary_quantity
-    revenue_summary()
-    @type = "quantity"
-    render :partial =>  "revenue_summary"
-  end
+    0.upto(limit-1) {
+      labels << ''
+      data << 0
+    }
+    
+    labels = (29.days.ago.to_date..Date.today).map {|date| date.strftime('%b %d')}
 
-  def revenue_summary_percentage
-    revenue_summary()
-    @type = "percentage"
-    render :partial =>  "revenue_summary"
+    query_results.each {|x|
+      xindex = -x['days_ago'].to_i + limit-1
+      next if xindex < 0 || xindex > limit-1
+      revenue = x['revenue'].to_f.round
+      data[xindex] = revenue
+    }
+
+    hash = { }
+    hash["labels"] = labels
+    hash["data"] = data
+    @chart = hash
   end
 
   def revenue_history_days
     @type = "30 Day"
-    flashRoute = url_for :controller => 'admin/charts', :action => 'revenue_history_days'
-    @chart = OpenFlashChart.swf_object(500, 170,  flashRoute)
+    
+    revenue_initial()
     render :partial =>  "revenue_history"
   end
-
-  def revenue_history_weeks
-    @type = "26 Week"
-    flashRoute = url_for :controller => 'admin/charts', :action => 'revenue_history_weeks'
-    @chart = OpenFlashChart.swf_object(500, 170, flashRoute)
-    render :partial =>  "revenue_history"
-  end
-
-  def revenue_history_months
-    @type = "12 Month"
-    flashRoute = url_for :controller => 'admin/charts', :action => 'revenue_history_months'
-    @chart = OpenFlashChart.swf_object(500, 170,  flashRoute)
-    render :partial =>  "revenue_history"
-  end
-
-  # Coupon actions
-=begin
-  def generate_coupons
-    if params[:form]
-      form = params[:form]
-      @coupons = []
-      1.upto(Integer(form[:quantity])) { |i|
-        coupon = Coupon.new
-        coupon.code = form[:code]
-        coupon.product_code = form[:product_code]
-        coupon.description = form[:description]
-        coupon.amount = form[:amount]
-        coupon.use_limit = form[:use_limit]
-        coupon.save()
-        @coupons << coupon
-      }
-      flash[:notice] = 'Coupons generated'
-    end
-  end
-=end
-
-#   def add_coupons # unused
-#     if params[:form]
-#       form = params[:form]
-#       lines = form[:coupons].split("\r\n")
-#       lines.reject! {|x| x.strip == ''}
-#       for line in lines
-#         coupon = Coupon.new
-#         coupon.code = form[:code]
-#         coupon.coupon = line.strip()
-#         coupon.product_code = 'x'
-#         coupon.description = form[:description].strip()
-#         coupon.amount = form[:amount].strip()
-#         coupon.save()
-#       end
-#     end
-#   end
-
-#   def mass_order # unused
-#     if params[:form]
-#       form = params[:form]
-#       for key in form.keys()
-#         form[key] = form[key].strip()
-#       end
-#       lines = form[:people].split("\r\n")
-#       lines.reject! {|x| x.strip == ''}
-#       for line in lines
-#         fname, lname, email = line.split(",").collect{|x| x.strip}
-#         order = Order.new
-
-#         # add item
-#         order.order_time = Time.now()
-
-#         order.add_form_items(params[:items])
-#         order.update_item_prices(params[:item_prices])
-
-#         order.first_name = fname
-#         order.last_name = lname
-#         order.email = email
-
-#         order.address1 = 'n/a'
-#         order.address2 = ''
-#         order.city = 'n/a'
-#         order.state = 'n/a'
-#         order.zipcode = 'n/a'
-#         order.country = 'XX'
-
-#         order.payment_type = form[:payment_type]
-#         order.cc_number = 'XXXXXXXXXXXXXXXX'
-#         order.cc_month = 'n/a'
-#         order.cc_year = 'n/a'
-#         order.cc_code = 'n/a'
-
-#         order.comment = ''
-
-#         order.status = 'C'
-#         order.save()
-
-#         coupons = order.add_promo_coupons()
-
-#         email = OrderMailer.thankyou(order).deliver
-#       end
-#     end
-#   end
 
   # Revenue summary
   private
+  def revenue_history_days_sql(days)
+    if Order.connection.adapter_name == 'PostgreSQL'
+      "select extract(year from orders.order_time) as year,
+              extract(month from orders.order_time) as month,
+              extract(day from orders.order_time) as day,
+              extract(day from age(date_trunc('day', orders.order_time))) as days_ago,
+              (sum(line_items.unit_price * quantity)
+                - sum(coalesce(regional_prices.amount, coupons.amount, 0))
+                - sum(line_items.unit_price * quantity * coalesce(percentage, 0) / 100)) * orders.currency_rate as revenue,
+              max(orders.order_time) as last_time
+
+         from orders
+              inner join line_items on orders.id = line_items.order_id
+              left outer join coupons on coupons.id = orders.coupon_id
+              left outer join regional_prices on regional_prices.container_id = coupons.id AND regional_prices.container_type = 'Product' AND regional_prices.currency = orders.currency
+
+        where status = 'C' and lower(payment_type) != 'free' and current_date - #{days-1} <= order_time
+
+        group by year, month, day, days_ago
+
+        order by last_time desc"
+    else
+      "select extract(year from orders.order_time) as year,
+              extract(month from orders.order_time) as month,
+              extract(day from orders.order_time) as day,
+              datediff(now(), orders.order_time) as days_ago,
+              (sum(line_items.unit_price * quantity)
+                - sum(coalesce(regional_prices.amount, coupons.amount, 0))
+                - sum(line_items.unit_price * quantity * coalesce(percentage, 0) / 100)) * orders.currency_rate as revenue,
+              max(orders.order_time) as last_time
+
+         from orders
+              inner join line_items on orders.id = line_items.order_id
+              left outer join coupons on coupons.id = orders.coupon_id
+              left outer join regional_prices on regional_prices.container_id = coupons.id AND regional_prices.container_type = 'Product' AND regional_prices.currency = orders.currency
+
+        where status = 'C' and lower(payment_type) != 'free' and current_date - #{days-1} <= order_time
+
+        group by year, month, day, days_ago
+
+        order by last_time desc"
+    end
+  end
+  
   def revenue_summary
     # NOTE: We have to use SQL because performance is completely unacceptable otherwise
-
     # helper function
     def last_n_days_sql(days)
 
-      if Order.connection.adapter_name.downcase == 'mysql'
-        "select (select count(*)
-                   from orders
-                  where status = 'C' and total > 0 and datediff(current_date(), order_time) <= #{days-1}) as orders,
-                sum(unit_price * quantity) as revenue,
-                sum(quantity) as quantity,
-                products.code as product_name
-
-           from orders
-                inner join line_items on orders.id = line_items.order_id
-                left outer join products on products.id = line_items.product_id
-
-          where status = 'C' and total > 0 and datediff(current_date(), order_time) <=  #{days-1}
-          group by product_name"
-      else
+      if Order.connection.adapter_name == 'PostgreSQL'
         "select (select count(*)
                    from orders
                   where status = 'C' and total > 0 and current_date - #{days-1} <= order_time) as orders,
@@ -200,6 +136,20 @@ class AdminController < ApplicationController
                 left outer join products on products.id = line_items.product_id
 
           where status = 'C' and total > 0 and current_date - #{days-1} <= order_time
+          group by product_name"
+      else
+        "select (select count(*)
+                   from orders
+                  where status = 'C' and total > 0 and datediff(current_date(), order_time) <= #{days-1}) as orders,
+                sum(unit_price * quantity) as revenue,
+                sum(quantity) as quantity,
+                products.code as product_name
+
+           from orders
+                inner join line_items on orders.id = line_items.order_id
+                left outer join products on products.id = line_items.product_id
+
+          where status = 'C' and total > 0 and datediff(current_date(), order_time) <=  #{days-1}
           group by product_name"
         end
     end
@@ -248,20 +198,20 @@ class AdminController < ApplicationController
     end
 
     def last_n_days_revenue(days)
-      if Order.connection.adapter_name.downcase == 'mysql'
-        last_n_days_sql = "
-          select sum(total) as revenue
-            from orders
-           where status = 'C' and total > 0 and datediff(current_date(), order_time) <=  #{days-1}"
-      else
+      if Order.connection.adapter_name == 'PostgreSQL'
         last_n_days_sql = "
           select sum(total) as revenue
             from orders
            where status = 'C' and total > 0 and current_date - #{days-1} <= order_time"
+      else
+        last_n_days_sql = "
+          select sum(total) as revenue
+            from orders
+           where status = 'C' and total > 0 and datediff(current_date(), order_time) <=  #{days-1}"
       end
 
       result = Order.connection.select_all(last_n_days_sql)
-      return (result != nil && result.length > 0 && result[0]["revenue"] != nil) ? result[0]["revenue"] : 0
+      return (result != nil && !result.empty? && result[0]["revenue"] != nil) ? result[0]["revenue"] : 0
     end
 
     @month_estimate = 0
@@ -275,7 +225,7 @@ class AdminController < ApplicationController
     today = Date.today
     days_in_current_month = Date.civil(today.year, today.month, -1).day
 
-    if result != nil and result.length > 0
+    if result != nil and result.empty?
       @month_estimate = last_n_days_revenue(today.day).to_f + daily_avg * (days_in_current_month - today.day)
       @year_estimate = daily_avg * 365
     end

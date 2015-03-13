@@ -1,0 +1,101 @@
+# Settings for PayPal Website Payments Standard (WPS)
+# ===================================================
+#
+# Requires a PayPal Business or Premier account.
+#
+# This module works by redirecting customers to PayPal with information about the order, including
+# an encoded item_number variable containing line item and coupon information 
+# (see Order#tinyencode and Order#tinydecode).  After the transaction is complete, the user is
+# redirected back to the store to be shown a summary (see Store::OrderController#wps_thankyou); 
+# at the same time, the order is reported to Google Analytics.
+# Independently of the customer, PayPal sends an 'Instant Payment Notification' (IPN) message to
+# the store (see Store::NotificationController#paypal_wps), which validates the order, generates
+# licence keys and emails them in a receipt to the buyer.
+#
+# Setup Instructions
+# ==================
+#
+# There are two pieces of configuration that are required for this module, plus
+# tax configuration and multi-currency configuration if required.
+#
+# Instant Payment Notification
+# ----------------------------
+#
+# To receive notification of completed transactions, you must enable Instant Payment Notification (IPN)
+# for your PayPal account.  See above for an explanation of what this does.
+#
+# To enable IPN, loging in, click on 'Profile', then 'Instant Payment Notification'.  Apply the following
+# settings:
+#   - Notification URL:       http://url.to.your.store/store/notification/paypal_wps
+#   - IPN messages:           Receive IPN messages (Enabled)
+#
+# Then click 'Save' at the bottom.
+#
+#
+# Payment Data Transfer 
+# ---------------------
+#
+# In order to provide support for Google Analytics' eCommerce tracking, you must set up 
+# PayPal's Payment Data Transfer (PDT) feature.
+#
+# This feature provides details of the transaction, used in conjunction with 'auto return' 
+# to send customers back to your store after the payment has been completed.  This allows
+# the store to obtain the order information immediately, within the customer's browser session,
+# and thus lets us report the transaction to Google Analytics.
+#
+# To enable it, log in to PayPal, click 'Profile', then 'Website Payment Preferences'
+# (or visit https://www.paypal.com/au/cgi-bin/webscr?cmd=_profile-website-payments).
+# Apply the following settings:
+#   - Auto Return:            On
+#   - Return URL:             http://url.to.your.store/store/order/wps_thankyou
+#   - Payment Data Transfer:  On
+#
+# Click 'Save' at the bottom, then PayPal will inform you that settings have been saved,
+# and will give you an identity token.  Use this token as the value to 'paypal_wps_pdt_token',
+# below.
+#
+# Read more about PDT at https://www.paypal.com/cgi-bin/webscr?cmd=p/xcl/rec/pdt-techview-outside
+#
+#
+# Tax
+# ---
+#
+# If you need to charge tax to certain customers, then this should be configured within PayPal.
+# This store will attempt to estimate tax by using the estimated location of the customer based
+# on their IP address, but this is for display purposes only: It is left to PayPal to enforce
+# the correct rate from the customer's account/address details.
+#
+#
+# Multiple currency support
+# -------------------------
+#
+# If you are charging in multiple currencies, or a currency different from your PayPal's 'home'
+# currency, then by default PayPal will hold any such transactions until you manually accept
+# them.  You can change this behaviour in PayPal account settings, under 'Payment Receiving 
+# Preferences',and set PayPal to automatically accept cross-currency payments.
+#
+# If you are using the US PayPal site, you have the option to create a balance in the new
+# currency.  Some other sites don't offer this options - you must create the currency balances
+# manually, which can be done from the profile settings.
+
+# make sure language encoding is set to utf-8!!!!!
+# https://www.paypal.com/cgi-bin/customerprofileweb?cmd=_profile-language-encoding
+
+
+development:
+    paypal_wps_email_address: "test@yourdomain.com"
+    paypal_wps_purchase_item_name: "Store Software Test Purchase"
+    paypal_wps_url: "https://www.sandbox.paypal.com/cgi-bin/webscr"
+    paypal_wps_pdt_token: "your_paypal_wps_pdt_token"
+    
+test:
+    paypal_wps_email_address: "test@yourdomain.com"
+    paypal_wps_purchase_item_name: "Store Software Test Purchase"
+    paypal_wps_url: "https://www.sandbox.paypal.com/cgi-bin/webscr"
+    paypal_wps_pdt_token: "your_paypal_wps_pdt_token"
+    
+production:
+    paypal_wps_email_address: "live@yourdomain.com"
+    paypal_wps_purchase_item_name: "Store Software Purchase"
+    paypal_wps_url: "https://www.paypal.com/cgi-bin/webscr"
+    paypal_wps_pdt_token: "your_paypal_wps_pdt_token"

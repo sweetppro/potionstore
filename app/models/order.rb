@@ -1,4 +1,3 @@
-require 'uuidtools'
 require 'ruby-paypal'
 
 class Order < ActiveRecord::Base
@@ -68,7 +67,7 @@ class Order < ActiveRecord::Base
   def calculated_total
     return round_money(total_before_applying_coupons() - coupon_amount())
   end
-
+  
   def total_before_applying_coupons
     total = 0
     for item in self.line_items
@@ -119,7 +118,8 @@ class Order < ActiveRecord::Base
 
   def licensee_name=(new_name)
     regenerate_keys = (self.licensee_name != new_name) && (self.submitting? or self.complete?)
-    write_attribute(:licensee_name, new_name.strip())
+    new_name.strip() if new_name
+    write_attribute(:licensee_name, new_name)
     if regenerate_keys
       for item in self.line_items
         item.license_key = make_license(item.product.code, new_name, item.quantity)
@@ -128,15 +128,21 @@ class Order < ActiveRecord::Base
   end
 
   def first_name=(value)
-    write_attribute(:first_name, value.strip())
+    value.strip() if value
+    write_attribute(:first_name, value)
   end
 
   def last_name=(value)
-    write_attribute(:last_name, value.strip())
+    value.strip() if value
+    write_attribute(:last_name, value)
   end
 
   def name
-    return self.first_name + ' ' + self.last_name
+    begin
+      return self.first_name + ' ' + self.last_name
+    rescue
+      return self.licensee_name
+    end
   end
 
   def address
@@ -203,6 +209,8 @@ class Order < ActiveRecord::Base
     case self.status
     when 'C'
       return 'Complete'
+    when 'V'
+      return 'Verifying'
     when 'P'
       return 'Pending'
     when 'S'
@@ -225,8 +233,7 @@ class Order < ActiveRecord::Base
     return if !coupon_text || coupon_text.strip == ''
     coupon = Coupon.find_by_coupon(coupon_text.strip)
     if coupon != nil && self.coupon == nil &&
-        (coupon.product_code == 'all' || has_item_with_code(coupon.product_code)) &&
-        coupon.enabled? && !coupon.expired?
+        (coupon.product_code == 'all' || has_item_with_code(coupon.product_code)) && !coupon.expired?
       self.coupon = coupon
       self.total = self.calculated_total
     end
@@ -273,6 +280,7 @@ class Order < ActiveRecord::Base
         item.unit_price = item.volume_price
       end
       self.total = self.calculated_total
+      return false if self.total <= 0
       return true
     rescue
       logger.error("Could not add form product items: #{$!}")
@@ -675,10 +683,37 @@ class Order < ActiveRecord::Base
     self.status = 'R'
     self.save()
   end
+
+  # Encode the line items and coupon of this order in a succint format (within 127 chars)
+  def tinyencode
+    require 'base64'
+    items = {}; self.line_items.each { |item| items[item.product_id] = item.quantity }
+    return Base64::urlsafe_encode64(Marshal.dump([items, (self.coupon_text if self.coupon)])).strip
+  end
+  
+  # Decode the previously encoded order (from tinyencode), into this order
+  def tinydecode(encoded)
+    begin
+      require 'base64'
+      data = Marshal::load(Base64::urlsafe_decode64(encoded))
+    rescue ArgumentError
+      return false
+    rescue TypeError
+      logger.error("Could not decode encoded order: #{encoded}")
+      return false
+    end
+    
+    items,coupontext = data
+    
+    self.add_form_items(items) or return false
+    self.coupon_text = coupontext if coupontext
+    
+    return true
+  end
   
   private
     def generate_token
-      token = UUIDTools::UUID.timestamp_create.to_s
+      token = SecureRandom.uuid.to_s
       self.uuid = token
       return token
     end

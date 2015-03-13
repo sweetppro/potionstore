@@ -1,107 +1,107 @@
 class CreateTables < ActiveRecord::Migration
   def self.up
 
-    create_table :products do |t|
-      t.column "code",              :string,  :limit => 16,                                :default => "",  :null => false
-      t.column "name",              :string,  :limit => 64,                                :default => "",  :null => false
-      t.column "price",             :decimal,               :precision => 10, :scale => 2, :default => 0.0, :null => false
-      t.column "image_path",        :text
-      t.column "url",               :text
-      t.column "download_url",      :text
-      t.column "license_url_scheme",:text
-      t.column "active",            :integer,                                              :default => 1,   :null => false
-    end
-
-    create_table :coupons do |t|
-      t.column "code",          :string,    :limit => 16,                                :default => "",  :null => false
-      t.column "description",   :string,    :limit => 64,                                :default => "",  :null => false
-      t.column "coupon",        :string,    :limit => 64,                                :default => "",  :null => false
-      t.column "product_code",  :string,    :limit => 16,                                :default => "",  :null => false
-      t.column "amount",        :decimal,                 :precision => 10, :scale => 2, :default => 0.0, :null => false
-      t.column "percentage",    :integer
-      t.column "used_count",    :integer
-      t.column "use_limit",     :integer,                                                :default => 1,   :null => false
-      t.column "creation_time", :timestamp
-      t.column "numdays",       :integer,                                                :default => 0,   :null => false
+    create_table "coupons", :force => true do |t|
+      t.string   "code",          :limit => 16,                                :default => "",  :null => false
+      t.string   "description",   :limit => 64,                                :default => "",  :null => false
+      t.string   "coupon",        :limit => 64,                                :default => "",  :null => false
+      t.string   "product_code",  :limit => 16,                                :default => "",  :null => false
+      t.decimal  "amount",                      :precision => 10, :scale => 2, :default => 0.0, :null => false
+      t.integer  "percentage"
+      t.integer  "used_count"
+      t.integer  "use_limit",                                                  :default => 1,   :null => false
+      t.datetime "creation_time"
+      t.integer  "numdays",                                                    :default => 0,   :null => false
     end
 
     add_index "coupons", ["coupon"], :name => "coupon"
 
-    create_table :orders do |t|
-      t.column "coupon_id",          :integer
-      t.column "status",             :string,   :limit => 1,   :default => "P", :null => false
-      t.column "email",              :string,   :limit => 128, :default => "",  :null => false
-      t.column "order_time",         :datetime
-      t.column "first_name",         :string,   :limit => 64,  :default => ""
-      t.column "licensee_name",      :string,   :limit => 128
-      t.column "last_name",          :string,   :limit => 64,  :default => ""
-      t.column "company",            :string,   :limit => 64
-      t.column "address1",           :string,   :limit => 64,  :default => ""
-      t.column "address2",           :string,   :limit => 64
-      t.column "city",               :string,   :limit => 64,  :default => ""
-      t.column "state",              :string,   :limit => 64,  :default => ""
-      t.column "zipcode",            :string,   :limit => 64,  :default => ""
-      t.column "country",            :string,   :limit => 2,   :default => "",  :null => false
-      t.column "payment_type",       :string,   :limit => 16
-      t.column "ccnum",              :string,   :limit => 32
-      t.column "comment",            :text
-      t.column "failure_code",       :integer
-      t.column "failure_reason",     :string
-      t.column "transaction_number", :string,   :limit => 64
+    create_table "currencies", :force => true do |t|
+      t.string   "code",       :limit => 3,                                                      :null => false
+      t.string   "unit",       :limit => 10,                                 :default => "$"
+      t.integer  "precision",                                                :default => 2
+      t.string   "separator",  :limit => 2,                                  :default => "."
+      t.string   "delimiter",  :limit => 2,                                  :default => ","
+      t.string   "format",     :limit => 16,                                 :default => "%u%n"
+      t.decimal  "rate",                     :precision => 12, :scale => 10, :default => 0.0
+      t.string   "countries"
+      t.datetime "created_at"
+      t.datetime "updated_at"
     end
 
-    add_index "orders", ["coupon_id"], :name => "coupon_id"
-    add_index "orders", ["email"], :name => "email"
-    
-    create_table :line_items do |t|
-      t.column "order_id",    :integer,                                              :default => 0,   :null => false
-      t.column "product_id",  :integer,                                              :default => 0,   :null => false
-      t.column "quantity",    :integer,                                              :default => 0,   :null => false
-      t.column "unit_price",  :decimal,               :precision => 10, :scale => 2, :default => 0.0, :null => false
-      t.column "license_key", :string,  :limit => 64
+    create_table "line_items", :force => true do |t|
+      t.integer "order_id",                                                  :default => 0,   :null => false
+      t.integer "product_id",                                                :default => 0,   :null => false
+      t.integer "quantity",                                                  :default => 0,   :null => false
+      t.decimal "unit_price",                 :precision => 10, :scale => 2, :default => 0.0, :null => false
+      t.string  "license_key", :limit => 128
     end
 
     add_index "line_items", ["order_id"], :name => "order_id"
     add_index "line_items", ["product_id"], :name => "product_id"
 
-    create_table :list_subscribers do |t|
-      t.column "email", :text, :default => "", :null => false
+    create_table "list_subscribers", :force => true do |t|
+      t.text "email", :null => false
     end
 
-    add_foreign_key :line_items, :orders, :dependent => :delete
-    add_foreign_key :line_items, :products
-    add_foreign_key :orders, :coupons
+    create_table "orders", :force => true do |t|
+      t.integer  "coupon_id"
+      t.string   "status",             :limit => 1,                                   :default => "P", :null => false
+      t.string   "email",              :limit => 128,                                 :default => "",  :null => false
+      t.datetime "order_time"
+      t.string   "first_name",         :limit => 64
+      t.string   "licensee_name",      :limit => 128
+      t.string   "last_name",          :limit => 64
+      t.string   "company",            :limit => 64
+      t.string   "address1",           :limit => 64
+      t.string   "address2",           :limit => 64
+      t.string   "city",               :limit => 64
+      t.string   "state",              :limit => 64
+      t.string   "zipcode",            :limit => 64
+      t.string   "country",            :limit => 2,                                   :default => "",  :null => false
+      t.string   "payment_type",       :limit => 16
+      t.string   "ccnum",              :limit => 32
+      t.text     "comment"
+      t.integer  "failure_code"
+      t.string   "failure_reason"
+      t.string   "transaction_number", :limit => 64
+      t.string   "currency",           :limit => 3
+      t.decimal  "currency_rate",                     :precision => 12, :scale => 10, :default => 1.0
+      t.decimal  "total",                             :precision => 10, :scale => 2,                   :null => false
+      t.string   "uuid",               :limit => 36
+    end
 
-    p = Product.new
-    p.code = "foo"
-    p.name = "Footion v1"
-    p.price = 12.95
-    p.image_path = "/images/store/application_icon.png"
-    p.url = "http://www.mycompany.com/foo/"
-    p.download_url = "http://www.mycompany.com/foo/download/"
-    p.license_url_scheme = "x-com-mycompany-license-footion"
-    p.save()
+    add_index "orders", ["coupon_id"], :name => "coupon_id"
+    add_index "orders", ["email"], :name => "email"
 
-    p = Product.new
-    p.code = "bar"
-    p.name = "Barsoap v1"
-    p.price = 24.95
-    p.url = "http://www.mycompany.com/bar/"
-    p.image_path = "/images/store/application_icon.png"
-    p.download_url = "http://www.mycompany.com/bar/download/"
-    p.license_url_scheme = "x-com-mycompany-license-barsoap"
-    p.save()
-  end
+    create_table "products", :force => true do |t|
+      t.string  "code",               :limit => 16,                                :default => "",  :null => false
+      t.string  "name",               :limit => 64,                                :default => "",  :null => false
+      t.decimal "price",                            :precision => 10, :scale => 2, :default => 0.0, :null => false
+      t.text    "image_path"
+      t.text    "url"
+      t.text    "download_url"
+      t.text    "license_url_scheme"
+      t.integer "active",                                                          :default => 1,   :null => false
+    end
 
-  def self.down
-    remove_foreign_key :line_items, :orders, :dependent => :delete
-    remove_foreign_key :line_items, :products
-    remove_foreign_key :orders, :coupons
-    
-    drop_table :list_subscribers
-    drop_table :line_items
-    drop_table :orders
-    drop_table :coupons
-    drop_table :products
+    create_table "regional_prices", :force => true do |t|
+      t.string   "currency",       :limit => 3,                                                 :null => false
+      t.decimal  "amount",                      :precision => 10, :scale => 2, :default => 0.0, :null => false
+      t.integer  "container_id"
+      t.string   "container_type"
+      t.datetime "created_at"
+      t.datetime "updated_at"
+    end
+
+    create_table "sessions", :force => true do |t|
+      t.string   "session_id", :null => false
+      t.text     "data"
+      t.datetime "created_at"
+      t.datetime "updated_at"
+    end
+
+    add_index "sessions", ["session_id"], :name => "index_sessions_on_session_id"
+    add_index "sessions", ["updated_at"], :name => "index_sessions_on_updated_at"
   end
 end

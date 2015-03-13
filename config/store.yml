@@ -12,10 +12,30 @@ google_analytics_account: ""
 include_mint: false
 paypal_express_checkout_header_image: "https://www.mycompany.com/images/mylogo.png"
 
-# Google checkout?
-allow_google_checkout: true
+# Payment types?
+allow_google_checkout: false
+allow_creditcards: false
+allow_paypal_express: false
 
-# Email addresses
+# Supported payment types (One or more of: gcheckout, paypal_express_checkout, paypal_wps, creditcard)
+payment_types: ["paypal_wps"]
+default_payment_type: "paypal_wps"
+
+# Currency settings
+# Currency in which to display reports in admin section
+report_currency:
+  code:        USD
+  precision:  2
+  unit:       "$"
+  separator:  "."
+  delimiter:  ","
+  format:     "%u%n"
+
+# Default currency for sales
+default_currency: 
+  code:        USD
+
+# Email settings
 support_email: "support@mycompany.com"
 sales_email: "sales@mycompany.com"
 

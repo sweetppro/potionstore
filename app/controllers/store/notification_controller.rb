@@ -42,6 +42,176 @@ class Store::NotificationController < ApplicationController
 
     render :text => ''
   end
+    
+  def paypal_wps
+
+    if params[:receiver_email] != $STORE_PREFS['paypal_wps_email_address']
+      logger.warn("Got request to PayPal IPN with invalid receiver email from #{request.remote_addr || request.remote_ip}")
+      render :text => 'Unauthorized', :status => 401
+      return
+    end
+    
+    # Call PayPal to validate
+    begin
+      validate_args = params.dup
+      validate_args['cmd'] = '_notify-validate'
+
+      if ENV['RAILS_ENV'] == 'test'
+        body = params[:notify_validate]
+      else
+        require 'net/http'
+        require 'net/https'
+        url = URI.parse($STORE_PREFS['paypal_wps_url'])
+        req = Net::HTTP::Post.new(url.path)
+        req.set_form_data(validate_args)
+        http = Net::HTTP.new(url.host, url.port)
+        http.use_ssl = true
+        body = http.start { |h| (res=h.request(req)).kind_of? Net::HTTPSuccess and res.read_body or nil }
+      end
+      
+      #when setting up button in PayPal, make sure "Donation ID" is left Blank!!!   
+      info = params[:item_number]
+      if info == nil
+      	render :text => "Donation processed", :status => 200
+      	return
+      end
+      
+      if !body 
+        logger.warn("Unable to authorise request to PayPal IPN for customer #{params[:payer_email]}")
+        render :text => 'Unauthorized', :status => 401
+        return
+      end
+      if body.strip != 'VERIFIED'
+        logger.warn("Unauthorised request to PayPal IPN from #{request.remote_addr || request.remote_ip}")
+        render :text => 'Unauthorized', :status => 401
+        return
+      end
+    rescue Exception => e
+      logger.warn("Exception while posting PayPal IPN validation: #{e.inspect} for customer #{params[:payer_email]}")
+      render :text => 'Internal error', :status => 500
+      return
+    end
+    
+    if params[:txn_type] != 'web_accept'
+      logger.warn("Non-web payment IPN type for customer #{params[:payer_email]}")
+      render :text => 'Ignoring non web_accept type', :status => 200
+      return
+    end
+    
+    order = Order.find_by_transaction_number_and_payment_type(params[:txn_id], 'PayPal')
+    
+    if order && order.status == 'C'
+      logger.warn("Duplicate IPN with transaction id #{params[:txn_id]}")
+      render :text => 'Ignoring IPN duplicate', :status => 200
+      return
+    end
+    
+    if !order
+      
+      #when setting up button in PayPal, make sure "Donation ID" is left Blank!!!   
+      info = params[:item_number]
+      if info == nil
+      	render :text => "Donation processed", :status => 200
+      	return
+      end
+      
+      order = Order.new
+      order.status = 'S'
+      order.first_name = params[:first_name]
+      order.last_name = params[:last_name]
+      order.licensee_name = order.first_name + " " + order.last_name
+      order.email = params[:payer_email]
+    
+      order.address1 = params[:address_street] 
+      order.address2 = '' 
+      order.city     = params[:address_city] 
+      order.country  = params[:address_country_code] 
+      order.zipcode  = params[:address_zip] 
+      order.state    = params[:address_state]
+    
+      if !order.country
+        # No address given to us by PayPal; try the other field
+        order.country = params[:residence_country] or 'XX'
+      end
+    
+      order.transaction_number = params[:txn_id]
+      order.payment_type = "PayPal"
+      order.order_time = Time.now
+      order.currency = params[:mc_currency]
+      
+      if !order.tinydecode params[:item_number]
+      
+        #when setting up button in PayPal, make sure "Donation ID" is left Blank!!! 
+        if params[:item_number] == ''
+          logger.warn("Donation for #{params[:item_name]} from customer #{params[:first_name]} #{params[:last_name]}")
+          render :text => 'Donation', :status => 200
+          return
+        else
+          logger.warn("Unable to decode order from item_number parameter, #{params[:item_number]} for customer #{params[:payer_email]}")
+          order.status = 'F'
+          order.failure_reason = "Unable to decode order from item_number parameter, #{params[:item_number]}"
+          order.finish_and_save()
+          render :text => 'Unable to decode order', :status => 200
+          return   
+        end
+      end
+    end
+    
+    if params[:mc_gross].to_f < order.total
+      
+      #when setting up button in PayPal, make sure "Donation ID" is left Blank!!!   
+      info = params[:item_number]
+      if info == nil
+      	render :text => "Donation processed", :status => 200
+      	return
+      end
+      
+      logger.warn("Payment of #{"%01.2f" % params[:mc_gross]} #{params[:mc_currency]} is less than order price, #{"%01.2f" % order.total} #{params[:mc_currency]}, for customer #{params[:payer_email]}")
+      order.status = 'F'
+      order.failure_reason = "Payment of #{"%01.2f" % params[:mc_gross]} #{params[:mc_currency]} is less than order price, #{"%01.2f" % order.total} #{params[:mc_currency]}"
+      order.finish_and_save()
+      render :text => 'Payment less than order price', :status => 200
+      return
+    end
+
+    
+    case params[:payment_status]
+      when 'Completed'
+        
+        #when setting up button in PayPal, make sure "Donation ID" is left Blank!!!
+        #also check to make sure order source is not a promo 
+        info = params[:item_number]
+        source = params[:source]
+        if info == nil && source != nil
+      	  render :text => "Donation processed", :status => 200
+      	  return
+        end
+      
+        order.status = 'C'
+        order.finish_and_save()
+        OrderMailer.thankyou(order).deliver
+        render :text => "Order processed", :status => 201
+        return
+        
+      when 'Pending'
+        order.status = 'P'
+        order.save
+      
+      when 'Denied'
+        order.status = 'F'
+        order.failure_reason = 'You denied the payment'
+        order.finish_and_save
+        
+      when 'Failed'
+        order.status = 'F'
+        order.failure_reason = 'The payment has failed'
+        order.finish_and_save
+    end
+
+    render :text => "Update processed", :status => 200
+    
+  end
+    
 
   private
   def process_new_order_notification(n)
@@ -82,7 +252,7 @@ class Store::NotificationController < ApplicationController
 
     order.subscribe_to_list() if n['buyer-marketing-preferences']['email_allowed'] == 'true'
 
-    order.gcheckout_add_merchant_order_number()
+    order.send_to_google_add_merchant_order_number_command()
   end
 
   private
@@ -93,9 +263,9 @@ class Store::NotificationController < ApplicationController
 
     order.status = 'C'
     order.finish_and_save()
-    OrderMailer.thankyou(order).deliver if is_live?()
+    OrderMailer.deliver_thankyou(order) if is_live?()
 
-    order.gcheckout_archive_order()
+    order.send_to_google_archive_order_command()
   end
 
 end

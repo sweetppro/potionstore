@@ -45,7 +45,9 @@ class LineItem < ActiveRecord::Base
   end
 
   def license_url
-    return self.product.license_url_scheme + '://' + self.license_key rescue nil
+    require 'base64'
+    licensee_name_b64 = Base64.urlsafe_encode64(self.order.licensee_name)
+    return self.product.license_url_scheme + '://' + licensee_name_b64 + '/' + self.license_key rescue nil
   end
 
 end

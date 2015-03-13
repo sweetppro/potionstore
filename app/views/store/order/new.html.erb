@@ -10,6 +10,7 @@ $(document).ready(function(){
 <% if $STORE_PREFS['allow_google_checkout'] then %>
 	$('.gcheckout img').click(function() { $('#gcheckout').get(0).checked = 'checked'; });
 <% end %>
+	$('.paypal_wps img').click(function() { $('#paypal_wps').get(0).checked = 'checked'; });
 //	$('#items_3').keyup(update_prices);
 //	$('#items_3').change(update_prices);
 });
@@ -26,7 +27,7 @@ $(document).ready(function(){
 	<tr>
 		<td>
 			<a href="<%=product.url %>">
-				<% if not product.image_path.blank? %>
+				<% if !product.image_path.blank? %>
 				<img src="<%= product.image_path %>" alt="">
 				<% end %>
 				<%= product.name %>
@@ -47,6 +48,7 @@ $(document).ready(function(){
     <tr id="payment_method">
 		<td><b>Payment Method:</b></td>
 		<td>
+			<% if $STORE_PREFS['allow_creditcards'] then %>
 			<p class="creditcards">
 				<%= radio_button_tag 'payment_type', 'cc', !(['paypal', 'gcheckout'].member? @payment_type), :id => 'creditcard' %>
 				<%= image_tag "store/visa.gif", :alt => "Visa" %>
@@ -54,24 +56,35 @@ $(document).ready(function(){
 				<%= image_tag "store/amex.gif", :alt => "Amex" %>
 				<%= image_tag "store/discover.gif", :alt => "Discover" %>
 			</p>
+			<% end %>
+			<% if $STORE_PREFS['allow_paypal_express'] then %>
 			<p class="paypal" style="font: 10px helvetica">
 				<%= radio_button_tag 'payment_type', 'paypal', @payment_type == 'paypal', :id => 'paypal' %>
 				<%= image_tag "store/paypal.gif", :alt => "Paypal" %>
 				Shop without sharing your financial information
 			</p>
+			<% end %>
 			<% if $STORE_PREFS['allow_google_checkout'] then %>
 			<p class="gcheckout">
 				<%= radio_button_tag 'payment_type', 'gcheckout', @payment_type == 'gcheckout', :id => 'gcheckout' %>
 				<%= image_tag "store/gcheckout.gif", :alt => "Google Checkout" %>
 			</p>
 			<% end %>
+			<p>
+				<%= radio_button_tag 'payment_type', 'paypal_wps', @payment_type == 'paypal_wps', :id => 'paypal_wps', :checked => true, :onclick => "toggle_visibility('bitcoin_license');" %>
+				<%= image_tag "store/paypal.gif", :alt => "Paypal WPS" %>
+				<%= image_tag "store/visa.gif", :alt => "Visa" %>
+				<%= image_tag "store/mc.gif", :alt => "MasterCard" %>
+				<%= image_tag "store/amex.gif", :alt => "Amex" %>
+				<%= image_tag "store/discover.gif", :alt => "Discover" %>
+			</p>
 		</td>
     </tr>
     <tr>
 		<td></td>
 		<td>
 			<input id="submit" name="commit" type="submit" value="&nbsp; Continue &rarr;" />
-            <span style="color:red; margin-left:10px"><%= flash[:notice] %></span>
+            <span style="color:red; margin-left:10px; display: inline-block;"><%= flash[:notice] %></span>
 		</td>
     </tr>
 </table>

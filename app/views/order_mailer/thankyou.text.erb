@@ -18,10 +18,16 @@ We recommend that you save this email in case you need to activate
 again in the future.
 
 <% for item in @order.line_items %>
-<%=item.product.name%>:
+<%=item.product.name%>:<br>
+<%= @order.licensee_name %>
 <%= item.license_key %>
 
+<%= item.product.download_url %>
 <% end %>
+
+
+To manually license your products, please copy and paste your name, and the license key.
+
 
 Please let us know if you have any questions or comments.
 Enjoy your purchase.
@@ -76,7 +82,7 @@ Total: <%= number_to_currency(@order.total) %>
 COUPONS
 ----------------------------------------------------------------------
 <%   if vc_coupons.length != 0 %>
-If you have friends who might enjoy Voice Candy, here are 3 coupon
+If you have friends who might enjoy <%=item.product.name%>, here are 3 coupon
 codes for $3 off their purchases. They expire in 15 days.
 
 <%= vc_coupons.collect {|x| x.coupon}.join(',  ') %>

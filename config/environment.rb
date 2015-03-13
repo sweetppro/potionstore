@@ -5,3 +5,5 @@ require 'digest/md5'
 
 # Initialize the rails application
 Potionstore::Application.initialize!
+
+ActionController::Base.relative_url_root = "/store"

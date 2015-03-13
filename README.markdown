@@ -93,8 +93,8 @@ and running on your local machine.
   ca_file: "certs/api_cert_chain.crt"
   ```
 - Set session store secret
-  Edit config/secrets.yml
-  run "rake secret" to generate secret_key_base's
+  - Edit config/secrets.yml
+  - run ```rake secret``` to generate secret_key_base's
 
 - Setup database
   - Install Postgresql or MySQL if you haven't
@@ -102,11 +102,11 @@ and running on your local machine.
   	Make sure to set the encoding of the database to UTF8.
 	I recommend pgAdmin for Postgresql newcomers.
   - Edit config/database.yml
-  - run "rake db:create db:migrate" to create the database schema
+  - run ```rake db:create db:migrate``` to create the database schema
   
 - Precompile Assets
-  - run "rake assets:clean" to clean any previously cached assets
-  - run "rake assets:precompile"
+  - run ```rake assets:clean``` to clean any previously cached assets
+  - run ```rake assets:precompile```
    
 - Run ```rails s``` and test through
   <http://localhost:3000/store> and

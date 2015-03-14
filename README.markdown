@@ -16,7 +16,7 @@ Features:
 Dependencies
 ------------
 
-- Rails 4.1 or higher.
+- Rails 4.2 or higher.
 - PostgreSQL or MySQL
 
 

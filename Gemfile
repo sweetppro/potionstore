@@ -1,7 +1,6 @@
 source 'http://rubygems.org'
 
-gem 'rails', '4.1.9'
-gem 'foreigner'
+gem 'rails', '4.2.0'
 gem "google4r-checkout", :git => 'https://github.com/nbudin/google4r-checkout.git'
 gem "money"
 gem 'mysql2', '~> 0.3.16'
@@ -25,3 +24,7 @@ gem 'rails-observers'
 gem 'actionpack-page_caching'
 gem 'actionpack-action_caching'
 gem 'activerecord-deprecated_finders'
+
+group :development do
+  gem 'web-console', '~> 2.0'
+end

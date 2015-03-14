@@ -1,5 +1,5 @@
 class Coupon < ActiveRecord::Base
-  validate :code, :presence => true
+  validates :code, presence: true
 
   def initialize
     super()

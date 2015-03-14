@@ -12,6 +12,7 @@ gem 'exception_notification', '4.0.1'
 gem 'exception_notification-rake'
 gem 'jquery-rails'
 gem 'base32'
+gem 'therubyracer', :platforms => :ruby
 gem 'quiet_assets', :group => :development
 gem 'spring', group: :development
 

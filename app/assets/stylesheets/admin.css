@@ -19,6 +19,7 @@ h2
 {
   margin: 0; padding: 0;
   padding-left: 0;
+  white-space: nowrap;
   }
 
 #topmenu li
@@ -70,7 +71,7 @@ h2
 
 hr { height: 20px; border: 0; }
 
-/* First column in a table */
+table.form { white-space: nowrap; }
 table.form tr td:first-child { text-align: right; }
 
 tr { vertical-align: top; }
@@ -110,6 +111,20 @@ table.list tr.newday { border-top:3px double #ccc; }
 .bold { font-weight:bold; }
 
 .highcharts-legend { display:none; }
-#admin_search_form { width:210px; display:block; }
-#admin_time_form { width: 380px; display:block; }
-#admin_search_form input { float:left; }
+
+.box { float:left; border:1px dotted #999; padding:10px; margin:10px; width:500px; }
+table tr th { text-align:left; }
+.clear { clear:both; }
+.boxmenu { float:right; font-size:10px; }
+table tr td { padding-right:10px; }
+#rsummary table { border-collapse:collapse; padding:0; margin:0; width:490px; }
+#rsummary table tr.top th { text-align:right; }
+#rsummary table th.first { padding-right:10px; text-align:right; }
+#rsummary td, #rsummary th { padding:2px; margin:0; }
+#rsummary td { border-top:1px solid #ccc; text-align:right; }
+#rsummary .total td { border-top: 3px double #ccc; }
+#projections { text-align:right; font-size:11px; color:#888; }
+
+table.product_nowrap { width:500px; display:block; margin-left:20px; }
+.wrap { white-space:normal; }
+.nowrap { white-space:nowrap; }

@@ -4,7 +4,7 @@
 <% end %>
 <table class="form">
 	<tr>
-		<td class="fl">Licensee&nbsp;Name:</td>
+		<td class="fl">Licensee Name:</td>
 		<td><%= form.text_field :licensee_name %></td>
 	</tr>
 	<tr>
@@ -14,7 +14,7 @@
 	<tr>
 		<td class="fl">Items:</td>
 	</tr>
-	<tr>
+	<tr class="wrap">
 		<td colspan="2"><%= render :partial => "product_quantities" %></td>
 	</tr>
 	<tr>
@@ -22,19 +22,19 @@
 		<td><%= form.text_field :company %></td>
 	</tr>
 	<tr>
-		<td class="fl">Billing&nbsp;First&nbsp;Name:</td>
+		<td class="fl">Billing First Name:</td>
 		<td><%= form.text_field :first_name %></td>
 	</tr>
 	<tr>
-		<td class="fl">Billing&nbsp;Last&nbsp;Name:</td>
+		<td class="fl">Billing Last Name:</td>
 		<td><%= form.text_field :last_name %></td>
 	</tr>
 	<tr>
-		<td class="fl">Address&nbsp;1:</td>
+		<td class="fl">Address 1:</td>
 		<td><%= form.text_field :address1 %></td>
 	</tr>
 	<tr>
-		<td class="fl">Address&nbsp;2:</td>
+		<td class="fl">Address 2:</td>
 		<td><%= form.text_field :address2 %></td>
 	</tr>
 	<tr>
@@ -50,7 +50,7 @@
 		<td><%= form.text_field :zipcode %></td>
 	</tr>
 	<tr>
-		<td class="fl">Country&nbsp;2&nbsp;letter&nbsp;Code:</td>
+		<td class="fl">Country 2 letter Code:</td>
 		<td><%= form.text_field :country, :size => 4 %></td>
 	</tr>
 	<tr>
@@ -58,11 +58,11 @@
 		<td><%= form.text_field :comment %></td>
 	</tr>
 	<tr>
-		<td class="fl">Payment&nbsp;Method:</td>
+		<td class="fl">Payment Method:</td>
 		<td><%= form.text_field :payment_type %></td>
 	</tr>
 		<tr>
-		<td class="fl">Ordered&nbsp;Time:</td>
-		<td><div id="admin_time_form"><%= datetime_select("order", "order_time") %></div></td>
+		<td class="fl">Ordered Time:</td>
+		<td><%= datetime_select("order", "order_time") %></td>
 	</tr>
 </table>

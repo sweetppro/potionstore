@@ -1,9 +1,9 @@
 source 'http://rubygems.org'
 
-gem 'rails', '4.2.0'
+gem 'rails', '4.2.1'
 gem "google4r-checkout", :git => 'https://github.com/nbudin/google4r-checkout.git'
 gem "money"
-gem 'mysql2', '~> 0.3.16'
+gem 'mysql2', '0.3.16'
 gem "xml-simple", "~> 1.1.1"
 gem 'will_paginate'
 gem 'dynamic_form'

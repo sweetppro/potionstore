@@ -18,49 +18,6 @@ class Admin::CouponsController < ApplicationController
     @coupon = Coupon.find(params[:id])
   end
 
-=begin
-  def toggle_state
-    @coupon = Coupon.find(params[:id])
-    
-    if params[:operation] == 'enable'
-      @coupon.enabled = true
-    elsif params[:operation] == 'disable'
-      @coupon.enabled = false
-    end
-    
-    if @coupon.save
-      redirect_to admin_coupon_path(@coupon.code), notice: 'Coupon was successfully disabled.'
-    else
-      redirect_to admin_coupon_path(@coupon.code), notice: 'Unable to disable coupon.'
-    end
-  end
-  
-  def toggle_state_for_all_coupons_with_code
-    @coupons = Coupon.where(:code => params[:id])
-    @coupons.each do |coupon|
-      if params[:operation] == 'enable'
-        coupon.enabled = true
-      elsif params[:operation] == 'disable'
-        coupon.enabled = false
-      end
-      coupon.save
-    end
-    
-    redirect_to admin_coupon_path(@coupons.first.code)
-  end
-=end
-
-=begin
-  def delete_all_coupons_with_code
-    @coupons = Coupon.where(:code => params[:id])
-    @coupons.each do |coupon|
-      coupon.delete
-    end
-    
-    redirect_to admin_coupons_path
-  end
-=end
-
   def create
     if params[:coupon]
       form = params[:coupon]
@@ -84,7 +41,7 @@ class Admin::CouponsController < ApplicationController
   def update
     @coupon = Coupon.find(params[:id])
     
-    if @coupon.update_attributes(params[:coupon])
+    if @coupon.update_attributes(params.require(:coupon).permit(:code, :coupon, :description, :product_code, :amount, :percentage, :use_limit))
       redirect_to admin_coupons_path, notice: 'Coupon was successfully updated.'
     else
       render action: "edit"

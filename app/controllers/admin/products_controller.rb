@@ -58,7 +58,7 @@ class Admin::ProductsController < ApplicationController
     @product = Product.find(params[:id])
 
     respond_to do |format|
-      if @product.update_attributes(params[:product])
+      if @product.update_attributes(params.require(:product).permit(:code, :name, :price, :image_path, :url, :download_url, :license_url_scheme, :active))        
         flash[:notice] = 'Product was successfully updated.'
         format.html { redirect_to admin_product_url(@product) }
         format.xml  { head :ok }

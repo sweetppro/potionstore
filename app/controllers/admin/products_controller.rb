@@ -38,7 +38,7 @@ class Admin::ProductsController < ApplicationController
   # POST /products
   # POST /products.xml
   def create
-    @product = Product.new(params[:product])
+    @product = Product.new(params.require(:product).permit(:code, :name, :price, :image_path, :url, :download_url, :license_url_scheme, :active))
 
     respond_to do |format|
       if @product.save

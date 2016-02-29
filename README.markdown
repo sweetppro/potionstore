@@ -16,7 +16,7 @@ Features:
 Dependencies
 ------------
 
-- Rails 4.2 or higher.
+- Rails 4.2.4 or higher.
 - PostgreSQL or MySQL
 
 
@@ -27,7 +27,7 @@ This is a brief outline of the steps required to get the development environment
 and running on your local machine.
 
 - Install gems via Bundler
-  - Run ```bundle install```
+  - Run ```bundle install --path gems```
   - Run ```bundle exec spring binstub --all```
 
 - Edit the following config files to suit your needs
@@ -105,7 +105,7 @@ and running on your local machine.
   - run ```rake db:create db:migrate``` to create the database schema
   
 - Precompile Assets
-  - run ```rake assets:clean``` to clean any previously cached assets
+  - run ```rake assets:clobber``` to clean any previously cached assets
   - run ```rake assets:precompile```
    
 - Run ```rails s``` and test through

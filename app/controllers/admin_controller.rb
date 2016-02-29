@@ -225,8 +225,8 @@ class AdminController < ApplicationController
     today = Date.today
     days_in_current_month = Date.civil(today.year, today.month, -1).day
 
-    if result != nil and result.empty?
-      @month_estimate = last_n_days_revenue(today.day).to_f + daily_avg * (days_in_current_month - today.day)
+    if daily_avg != nil
+      @month_estimate = daily_avg * days_in_current_month
       @year_estimate = daily_avg * 365
     end
   end

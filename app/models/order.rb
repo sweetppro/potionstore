@@ -348,6 +348,13 @@ class Order < ActiveRecord::Base
   end
 
   def save
+    if self.email == nil
+      self.email = ''
+    end
+    if self.country == nil
+      self.country = 'US'
+    end
+    
     # Insert a dash for Japanese zipcodes if it doesn't have one
     if self.country == 'JP' && self.zipcode != nil && self.zipcode.count('-') == 0 && self.zipcode.length > 3
       self.zipcode.insert(3, '-')

@@ -1,9 +1,10 @@
 source 'http://rubygems.org'
 
-gem 'rails', '4.2.1'
+gem 'rails', '4.2.4'
 gem "google4r-checkout", :git => 'https://github.com/nbudin/google4r-checkout.git'
 gem "money"
-gem 'mysql2', '0.3.16'
+gem "pg"
+#gem 'mysql2', '0.3.16'
 gem "xml-simple", "~> 1.1.1"
 gem 'will_paginate'
 gem 'dynamic_form'
@@ -12,6 +13,9 @@ gem 'exception_notification-rake'
 gem 'jquery-rails'
 gem 'base32'
 gem 'therubyracer', :platforms => :ruby
+gem 'libv8'
+gem 'eventmachine', '1.0.9.1'
+gem 'em-http-request'
 gem 'quiet_assets', :group => :development
 gem 'spring', group: :development
 

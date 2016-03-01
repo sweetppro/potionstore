@@ -352,7 +352,7 @@ class Order < ActiveRecord::Base
       self.email = ''
     end
     if self.country == nil
-      self.country = 'US'
+      self.country = ''
     end
     
     # Insert a dash for Japanese zipcodes if it doesn't have one

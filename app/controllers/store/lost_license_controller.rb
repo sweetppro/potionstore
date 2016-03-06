@@ -11,16 +11,18 @@ class Store::LostLicenseController < ApplicationController
     end
 
     email = params[:email].strip().downcase()
-    orders = Order.find(:all, :conditions => ["status='C' AND LOWER(email)=?", email])
+    orders = Order.where(["status='C' AND LOWER(email)=?", email])
     if orders.empty?
       flash[:license_notice] = "Could not find any orders for " + email
       @email = email
       render :action => 'index' and return
     end
     for order in orders
-      OrderMailer.thankyou(order, bcc = false).deliver
-      if $STORE_PREFS['send_lost_license_sent_notification_email']
-        OrderMailer.lost_license_sent(order).deliver
+      Thread.new do
+        OrderMailer.thankyou(order, bcc = false).deliver
+        if $STORE_PREFS['send_lost_license_sent_notification_email']
+          OrderMailer.lost_license_sent(order).deliver
+        end
       end
     end
     redirect_to :action => 'sent'

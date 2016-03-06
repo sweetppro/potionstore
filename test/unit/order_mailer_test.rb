@@ -18,12 +18,14 @@ class OrderMailerTest < Test::Unit::TestCase
   end
 
   def test_thankyou
-    @actual = OrderMailer.create_thankyou(orders(:first))
+    Thread.new do
+      @actual = OrderMailer.create_thankyou(orders(:first))
+    end
 
     #From: is correct
     assert_equal(@actual.header['from'].to_s,$STORE_PREFS['purchase_receipt_sender_email'])
     #To: is correct
-   assert_equal(@actual.header['to'].to_s,orders(:first).email)
+    assert_equal(@actual.header['to'].to_s,orders(:first).email)
 
     #Make sure we're polite
     assert(@actual.body.match(/thank you/i))
@@ -35,11 +37,11 @@ class OrderMailerTest < Test::Unit::TestCase
   end
 
   private
-    def read_fixture(action)
-      IO.readlines("#{FIXTURES_PATH}/order_mailer/#{action}")
-    end
+  def read_fixture(action)
+    IO.readlines("#{FIXTURES_PATH}/order_mailer/#{action}")
+  end
 
-    def encode(subject)
-      quoted_printable(subject, CHARSET)
-    end
+  def encode(subject)
+    quoted_printable(subject, CHARSET)
+  end
 end

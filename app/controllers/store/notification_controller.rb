@@ -35,9 +35,9 @@ class Store::NotificationController < ApplicationController
 
     when 'charge-amount-notification'
       process_charge_amount_notification(notification_data)
-    # Ignore the other notifications
-#   when 'order-state-change-notification'
-#   when 'risk-information-notification'
+      # Ignore the other notifications
+      #   when 'order-state-change-notification'
+      #   when 'risk-information-notification'
     end
 
     render :text => ''
@@ -72,8 +72,8 @@ class Store::NotificationController < ApplicationController
       #when setting up button in PayPal, make sure "Donation ID" is left Blank!!!   
       info = params[:item_number]
       if info == nil
-      	render :text => "Donation processed", :status => 200
-      	return
+        render :text => "Donation processed", :status => 200
+        return
       end
       
       if !body 
@@ -111,8 +111,8 @@ class Store::NotificationController < ApplicationController
       #when setting up button in PayPal, make sure "Donation ID" is left Blank!!!   
       info = params[:item_number]
       if info == nil
-      	render :text => "Donation processed", :status => 200
-      	return
+        render :text => "Donation processed", :status => 200
+        return
       end
       
       order = Order.new
@@ -162,8 +162,8 @@ class Store::NotificationController < ApplicationController
       #when setting up button in PayPal, make sure "Donation ID" is left Blank!!!   
       info = params[:item_number]
       if info == nil
-      	render :text => "Donation processed", :status => 200
-      	return
+        render :text => "Donation processed", :status => 200
+        return
       end
       
       logger.warn("Payment of #{"%01.2f" % params[:mc_gross]} #{params[:mc_currency]} is less than order price, #{"%01.2f" % order.total} #{params[:mc_currency]}, for customer #{params[:payer_email]}")
@@ -176,36 +176,38 @@ class Store::NotificationController < ApplicationController
 
     
     case params[:payment_status]
-      when 'Completed'
+    when 'Completed'
         
-        #when setting up button in PayPal, make sure "Donation ID" is left Blank!!!
-        #also check to make sure order source is not a promo 
-        info = params[:item_number]
-        source = params[:source]
-        if info == nil && source != nil
-      	  render :text => "Donation processed", :status => 200
-      	  return
-        end
-      
-        order.status = 'C'
-        order.finish_and_save()
-        OrderMailer.thankyou(order).deliver
-        render :text => "Order processed", :status => 201
+      #when setting up button in PayPal, make sure "Donation ID" is left Blank!!!
+      #also check to make sure order source is not a promo 
+      info = params[:item_number]
+      source = params[:source]
+      if info == nil && source != nil
+        render :text => "Donation processed", :status => 200
         return
-        
-      when 'Pending'
-        order.status = 'P'
-        order.save
+      end
       
-      when 'Denied'
-        order.status = 'F'
-        order.failure_reason = 'You denied the payment'
-        order.finish_and_save
+      order.status = 'C'
+      order.finish_and_save()
+      Thread.new do
+        OrderMailer.thankyou(order).deliver
+      end
+      render :text => "Order processed", :status => 201
+      return
         
-      when 'Failed'
-        order.status = 'F'
-        order.failure_reason = 'The payment has failed'
-        order.finish_and_save
+    when 'Pending'
+      order.status = 'P'
+      order.save
+      
+    when 'Denied'
+      order.status = 'F'
+      order.failure_reason = 'You denied the payment'
+      order.finish_and_save
+        
+    when 'Failed'
+      order.status = 'F'
+      order.failure_reason = 'The payment has failed'
+      order.finish_and_save
     end
 
     render :text => "Update processed", :status => 200
@@ -263,7 +265,9 @@ class Store::NotificationController < ApplicationController
 
     order.status = 'C'
     order.finish_and_save()
-    OrderMailer.deliver_thankyou(order) if is_live?()
+    Thread.new do
+      OrderMailer.deliver_thankyou(order) if is_live?()
+    end
 
     order.send_to_google_archive_order_command()
   end

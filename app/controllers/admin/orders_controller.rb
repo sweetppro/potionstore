@@ -131,7 +131,9 @@ class Admin::OrdersController < ApplicationController
   # GET /orders/1/send_emails
   def send_emails
     @order = Order.find(params[:id])
-    OrderMailer.thankyou(@order).deliver
+    Thread.new do
+      OrderMailer.thankyou(@order).deliver
+    end
     redirect_to :action => 'show', :id => @order.id
   end
   

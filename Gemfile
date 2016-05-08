@@ -1,6 +1,6 @@
 source 'http://rubygems.org'
 
-gem 'rails', '4.2.4'
+gem 'rails', '4.2.5'
 gem "google4r-checkout", :git => 'https://github.com/nbudin/google4r-checkout.git'
 gem "money"
 gem "pg"
